@@ -1,15 +1,20 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. 頁面外觀設定 ---
+# --- 1. 徹底隱藏的金鑰設定 ---
+# 這裡直接定義變數，介面上完全看不到
+# ⚠️ 警告：請勿將此檔案傳給不信任的人，因為他們打開程式碼就能看到 Key
+API_KEY = "AIzaSyA8y6RuSEgItkSXGqvH8-b1K2d8dMT7I5I"
+
+# --- 2. 頁面外觀設定 ---
 st.set_page_config(
-    page_title="Galaxy AI 動漫全能版 (免輸入Key版)",
+    page_title="Galaxy AI",
     page_icon="🌌",
     layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. 角色設定庫 ---
+# --- 3. 角色設定庫 ---
 ROLES = {
     "📺 動漫萬能 Cosplayer": {
         "icon": "📺",
@@ -38,10 +43,9 @@ ROLES = {
     }
 }
 
-# --- 3. 側邊欄設計 ---
+# --- 4. 側邊欄設計 (已移除金鑰欄位) ---
 with st.sidebar:
     st.title("🌌 Galaxy 控制台")
-    st.caption("v5.0 - 自動登入版") 
     
     st.subheader("🎭 選擇模式")
     
@@ -53,30 +57,19 @@ with st.sidebar:
     
     custom_character_name = ""
     if selected_role_name == "📺 動漫萬能 Cosplayer":
-        st.info("👇 在這裡輸入你想聊天的動漫人物")
+        st.info("👇 輸入動漫人物名字")
         custom_character_name = st.text_input("角色名字", value="五條悟")
     
     current_role = ROLES[selected_role_name]
     
     st.divider()
 
-    # --- 這裡是你要求的修改：直接幫你填入 Key ---
-    with st.expander("🔐 API 金鑰設定", expanded=True):
-        # 這裡我把你的 Key 設為預設值 (value)
-        # 這樣你就不用每次都重新貼上了
-        api_key = st.text_input(
-            "Google API Key (已自動填入)", 
-            type="password", 
-            value="AIzaSyA8y6RuSEgItkSXGqvH8-b1K2d8dMT7I5I"
-        )
-        st.caption("⚠️ 警告：Key 已寫入程式碼，請勿隨意分享此檔案給陌生人。")
-
     # 清除記憶
-    if st.button("🗑️ 清空對話 / 套用設定", type="primary", use_container_width=True):
+    if st.button("🗑️ 清空對話 / 重置", type="primary", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 4. 準備 Prompt (包含動漫設定) ---
+# --- 5. 準備 Prompt ---
 if selected_role_name == "📺 動漫萬能 Cosplayer":
     final_prompt = f"""
     【系統強制指令】
@@ -92,13 +85,13 @@ else:
     final_prompt = f"【系統強制指令】\n{current_role['prompt']}"
     display_name = selected_role_name
 
-# --- 5. 主畫面與標題 ---
+# --- 6. 主畫面與標題 ---
 st.title(f"{current_role['icon']} {display_name}")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- 6. 核心修改：手動注入 Prompt (解決 404 問題的關鍵) ---
+# --- 7. 手動注入 Prompt (解決 404 問題的關鍵) ---
 if len(st.session_state.chat_history) == 0:
     initial_history = [
         {"role": "user", "parts": [final_prompt]},
@@ -107,22 +100,19 @@ if len(st.session_state.chat_history) == 0:
 else:
     initial_history = []
 
-# --- 7. 顯示歷史訊息 ---
+# --- 8. 顯示歷史訊息 ---
 for message in st.session_state.chat_history:
     role = "user" if message["role"] == "user" else "assistant"
     avatar = current_role['icon'] if role == "assistant" else "👤"
     with st.chat_message(role, avatar=avatar):
         st.markdown(message["parts"][0])
 
-# --- 8. 處理對話 ---
+# --- 9. 處理對話 ---
 if prompt := st.chat_input("請輸入訊息..."):
     
-    if not api_key:
-        st.warning("⚠️ 請先在左側設定 API Key")
-        st.stop()
-    
     try:
-        genai.configure(api_key=api_key)
+        # 使用最上方隱藏的變數進行連線
+        genai.configure(api_key=API_KEY)
         
         # 顯示使用者
         with st.chat_message("user", avatar="👤"):
@@ -134,7 +124,6 @@ if prompt := st.chat_input("請輸入訊息..."):
             message_placeholder = st.empty()
             full_response = ""
             
-            # 使用 gemini-pro 並手動組合歷史紀錄
             model = genai.GenerativeModel('gemini-pro') 
             
             if len(st.session_state.chat_history) == 1: 
@@ -156,4 +145,3 @@ if prompt := st.chat_input("請輸入訊息..."):
             
     except Exception as e:
         st.error(f"❌ 錯誤：{e}")
-        st.caption("如果看到 404 錯誤，請確認網路連線。Key 已經預設填好了。")
