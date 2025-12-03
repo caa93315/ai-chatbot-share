@@ -11,7 +11,7 @@ MODEL_NAME = "models/gemini-2.0-flash-exp"
 
 # --- 3. 頁面外觀設定 ---
 st.set_page_config(
-    page_title="Galaxy AI (Gemini 2.0)",
+    page_title="Galaxy AI 小夥伴",
     page_icon="🌌",
     layout="centered",
     initial_sidebar_state="expanded"
