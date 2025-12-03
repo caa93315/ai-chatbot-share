@@ -16,7 +16,7 @@ st.caption("🚀 支援自動金鑰與角色切換 (Flash Model)")
 api_key = None
 
 if "GOOGLE_API_KEY" in st.secrets:
-    api_key = st.secrets["GOOGLE_API_KEY"]
+    api_key = st.secrets["AIzaSyDhcyR0K1FsSABRQUxglo1U-J_gFiU376U"]
     # 這裡不顯示 Key，只顯示狀態，保護隱私
     with st.sidebar:
         st.success("✅ 已啟用雲端金鑰 (朋友免輸入)")
@@ -24,7 +24,7 @@ else:
     # 如果沒有設定 Secrets，就讓使用者手動輸入
     with st.sidebar:
         st.header("🔐 驗證")
-        api_key = st.text_input("AIzaSyDhcyR0K1FsSABRQUxglo1U-J_gFiU376U", type="password")
+        api_key = st.text_input("請輸入 Google API Key", type="password")
         st.markdown("[取得免費 Key](https://aistudio.google.com/app/apikey)")
 
 # --- 3. 側邊欄：功能設定 ---
