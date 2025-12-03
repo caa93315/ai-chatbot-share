@@ -5,7 +5,7 @@ import google.generativeai as genai
 API_KEY = "AIzaSyA8y6RuSEgItkSXGqvH8-b1K2d8dMT7I5I"
 
 # --- 2. 使用最新的 2.0 模型 ---
-MODEL_NAME = "gemini-2.0-flash-exp" 
+MODEL_NAME = "gemini-2.0-flash" 
 
 # --- 3. 頁面外觀設定 ---
 st.set_page_config(
