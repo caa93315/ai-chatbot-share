@@ -129,7 +129,7 @@ if prompt := st.chat_input("請輸入訊息..."):
             
             # 設定模型 (帶入動態 Prompt)
             model = genai.GenerativeModel(
-                'gemini-1.5-flash',
+                'gemini-pro',
                 system_instruction=final_prompt
             )
             
