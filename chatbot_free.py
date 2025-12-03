@@ -7,7 +7,7 @@ API_KEY = "AIzaSyA8y6RuSEgItkSXGqvH8-b1K2d8dMT7I5I"
 
 # --- 2. 選擇最強模型 (根據你的測試結果) ---
 # 你的測試列表裡有這個最新的 2.0 模型，比之前的更聰明！
-MODEL_NAME = "gemini-2.0-flash-exp" 
+MODEL_NAME = "gemini-2.0-flash" 
 
 # --- 3. 頁面外觀設定 ---
 st.set_page_config(
