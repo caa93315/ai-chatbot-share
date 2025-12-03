@@ -2,19 +2,22 @@ import streamlit as st
 import google.generativeai as genai
 
 # --- 1. 徹底隱藏的金鑰設定 ---
-# 這裡直接定義變數，介面上完全看不到
-# ⚠️ 警告：請勿將此檔案傳給不信任的人，因為他們打開程式碼就能看到 Key
+# 這是你測試成功的 Key，我們直接用它
 API_KEY = "AIzaSyA8y6RuSEgItkSXGqvH8-b1K2d8dMT7I5I"
 
-# --- 2. 頁面外觀設定 ---
+# --- 2. 選擇最強模型 (根據你的測試結果) ---
+# 你的測試列表裡有這個最新的 2.0 模型，比之前的更聰明！
+MODEL_NAME = "models/gemini-2.0-flash-exp" 
+
+# --- 3. 頁面外觀設定 ---
 st.set_page_config(
-    page_title="Galaxy AI",
+    page_title="Galaxy AI (Gemini 2.0)",
     page_icon="🌌",
     layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# --- 3. 角色設定庫 ---
+# --- 4. 角色設定庫 ---
 ROLES = {
     "📺 動漫萬能 Cosplayer": {
         "icon": "📺",
@@ -43,9 +46,10 @@ ROLES = {
     }
 }
 
-# --- 4. 側邊欄設計 (已移除金鑰欄位) ---
+# --- 5. 側邊欄設計 ---
 with st.sidebar:
     st.title("🌌 Galaxy 控制台")
+    st.caption("🚀 Powered by Gemini 2.0") # 標示使用最新模型
     
     st.subheader("🎭 選擇模式")
     
@@ -64,12 +68,11 @@ with st.sidebar:
     
     st.divider()
 
-    # 清除記憶
     if st.button("🗑️ 清空對話 / 重置", type="primary", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 5. 準備 Prompt ---
+# --- 6. 準備 Prompt ---
 if selected_role_name == "📺 動漫萬能 Cosplayer":
     final_prompt = f"""
     【系統強制指令】
@@ -85,13 +88,13 @@ else:
     final_prompt = f"【系統強制指令】\n{current_role['prompt']}"
     display_name = selected_role_name
 
-# --- 6. 主畫面與標題 ---
+# --- 7. 主畫面 ---
 st.title(f"{current_role['icon']} {display_name}")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- 7. 手動注入 Prompt (解決 404 問題的關鍵) ---
+# --- 8. 手動注入設定 (確保角色扮演成功) ---
 if len(st.session_state.chat_history) == 0:
     initial_history = [
         {"role": "user", "parts": [final_prompt]},
@@ -100,18 +103,18 @@ if len(st.session_state.chat_history) == 0:
 else:
     initial_history = []
 
-# --- 8. 顯示歷史訊息 ---
+# --- 9. 顯示歷史訊息 ---
 for message in st.session_state.chat_history:
     role = "user" if message["role"] == "user" else "assistant"
     avatar = current_role['icon'] if role == "assistant" else "👤"
     with st.chat_message(role, avatar=avatar):
         st.markdown(message["parts"][0])
 
-# --- 9. 處理對話 ---
+# --- 10. 處理對話 ---
 if prompt := st.chat_input("請輸入訊息..."):
     
     try:
-        # 使用最上方隱藏的變數進行連線
+        # 設定 API (使用你的 Key)
         genai.configure(api_key=API_KEY)
         
         # 顯示使用者
@@ -124,8 +127,10 @@ if prompt := st.chat_input("請輸入訊息..."):
             message_placeholder = st.empty()
             full_response = ""
             
-            model = genai.GenerativeModel('gemini-pro') 
+            # 關鍵修改：使用你在測試中確認存在的模型名稱
+            model = genai.GenerativeModel(MODEL_NAME)
             
+            # 組合歷史紀錄
             if len(st.session_state.chat_history) == 1: 
                  history_for_api = initial_history + st.session_state.chat_history[:-1]
             else:
