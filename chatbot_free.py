@@ -1,106 +1,139 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. 頁面設定 ---
+# --- 1. 頁面外觀設定 ---
 st.set_page_config(
-    page_title="Gemini 全能助手",
-    page_icon="🤖",
-    layout="centered"
+    page_title="Galaxy AI 萬能夥伴",
+    page_icon="🌌",
+    layout="centered",
+    initial_sidebar_state="expanded"
 )
 
-st.title("🤖 Gemini 全能助手")
-st.caption("🚀 支援自動金鑰與角色切換 (Flash Model)")
+# --- 2. 角色設定庫 ---
+ROLES = {
+    "📺 動漫萬能 Cosplayer": { # <--- 新增的最強模式
+        "icon": "📺",
+        "description": "輸入名字，變身任何角色！",
+        "prompt": "（動態設定）" # 這裡留空，等一下我們會根據使用者輸入來填寫
+    },
+    "✨ 萬能助理": {
+        "icon": "🤖",
+        "description": "標準助手模式",
+        "prompt": "你是一個有用且精確的 AI 助手，回答繁體中文。語氣專業、客觀。"
+    },
+    "🐱 傲嬌貓娘": {
+        "icon": "🐾",
+        "description": "會生氣也會撒嬌",
+        "prompt": "你是一隻個性傲嬌的貓娘「奈奈」。每句話結尾要加'喵~'。稱呼使用者為'主人'。個性要傲嬌，嘴硬心軟。"
+    },
+    "🔮 神秘占卜師": {
+        "icon": "🔮",
+        "description": "探索命運與星座",
+        "prompt": "你是一位神秘的占卜師。語氣神秘、優雅。回答時請模擬抽出塔羅牌並解釋含義。"
+    },
+    "🇺🇸 英文翻譯官": {
+        "icon": "🇺🇸",
+        "description": "中英互譯專用",
+        "prompt": "你是一個翻譯引擎。直接將輸入翻譯成道地英文，不需要解釋。"
+    }
+}
 
-# --- 2. 智慧金鑰管理 (關鍵升級) ---
-# 邏輯：先檢查雲端/本地有無設定 Secrets，如果沒有，才顯示輸入框
-api_key = None
-
-if "GOOGLE_API_KEY" in st.secrets:
-    api_key = st.secrets["AIzaSyDhcyR0K1FsSABRQUxglo1U-J_gFiU376U"]
-    # 這裡不顯示 Key，只顯示狀態，保護隱私
-    with st.sidebar:
-        st.success("✅ 已啟用雲端金鑰 (朋友免輸入)")
-else:
-    # 如果沒有設定 Secrets，就讓使用者手動輸入
-    with st.sidebar:
-        st.header("🔐 驗證")
-        api_key = st.text_input("請輸入 Google API Key", type="password")
-        st.markdown("[取得免費 Key](https://aistudio.google.com/app/apikey)")
-
-# --- 3. 側邊欄：功能設定 ---
+# --- 3. 側邊欄設計 ---
 with st.sidebar:
-    st.divider()
-    st.header("⚙️ 調整大腦")
+    st.title("🌌 Galaxy 控制台")
+    st.caption("v3.0 - 動漫無限版")
     
-    # 讓使用者選擇 AI 的角色
-    role_option = st.selectbox(
-        "選擇 AI 角色",
-        ("✨ 萬能助理", "🐱 貓娘模式", "🐍 Python 程式導師", "🇺🇸 英文翻譯官"),
-        index=0
+    st.subheader("🎭 選擇模式")
     
+    selected_role_name = st.radio(
+        "角色列表：",
+        list(ROLES.keys()),
+        format_func=lambda x: f"{ROLES[x]['icon']} {x}"
     )
     
-    # 根據選擇設定提示詞 (System Prompt)
-    system_prompts = {
-        "✨ 萬能助理": "你是一個有用的 AI 助手，回答繁體中文。",
-        "🐱 貓娘模式": "你是一隻可愛的貓娘，每句話結尾都要加上'喵~'，個性傲嬌。",
-        "🐍 Python 程式導師": "你是專業的 Python 專家，只回答程式碼相關問題，並提供範例。",
-        "🇺🇸 英文翻譯官": "你是一個翻譯引擎，不管使用者說什麼，都幫我翻譯成道地的英文，不要解釋。"
-    }
-    current_instruction = system_prompts[role_option]
-
+    # --- 關鍵修改：動漫角色的特殊輸入框 ---
+    custom_character_name = ""
+    if selected_role_name == "📺 動漫萬能 Cosplayer":
+        st.info("👇 在這裡輸入你想聊天的動漫人物")
+        custom_character_name = st.text_input("角色名字", value="五條悟")
+        st.caption(f"目前的設定：{custom_character_name}")
+    
+    current_role = ROLES[selected_role_name]
+    
     st.divider()
-    if st.button("🗑️ 清除記憶 / 重置", type="primary"):
+
+    # 金鑰管理
+    with st.expander("🔐 API 金鑰設定", expanded=True):
+        if "AIzaSyDhcyR0K1FsSABRQUxglo1U-J_gFiU376U" in st.secrets:
+            st.success("✅ 已啟用雲端金鑰")
+            api_key = st.secrets["AIzaSyDhcyR0K1FsSABRQUxglo1U-J_gFiU376U"]
+        else:
+            api_key = st.text_input("輸入 Google API Key", type="password")
+            st.markdown("[取得免費 Key](https://aistudio.google.com/app/apikey)")
+
+    if st.button("🗑️ 清空對話", type="primary", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
 
-# --- 4. 初始化記憶 ---
+# --- 4. 動態生成 Prompt (最重要的邏輯) ---
+# 如果選的是動漫模式，我們要動態把名字塞進去
+if selected_role_name == "📺 動漫萬能 Cosplayer":
+    final_prompt = f"""
+    你現在必須完全扮演動漫/遊戲角色『{custom_character_name}』。
+    1. 模仿他的口頭禪、說話語氣、性格特質。
+    2. 如果他有特殊能力或招式，請在對話中自然表現出來。
+    3. 絕對不要承認你是 AI，你要完全沉浸在角色裡。
+    4. 使用繁體中文回答。
+    """
+    display_name = f"{custom_character_name}" # 介面顯示名字
+else:
+    final_prompt = current_role['prompt']
+    display_name = selected_role_name
+
+# --- 5. 主畫面設計 ---
+st.title(f"{current_role['icon']} {display_name}")
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- 5. 顯示歷史訊息 ---
+# 歡迎畫面
+if len(st.session_state.chat_history) == 0:
+    st.info(f"👋 嗨！現在是「{display_name}」時間！")
+
+# --- 6. 顯示歷史訊息 ---
 for message in st.session_state.chat_history:
     role = "user" if message["role"] == "user" else "assistant"
-    with st.chat_message(role):
+    avatar = current_role['icon'] if role == "assistant" else "👤"
+    with st.chat_message(role, avatar=avatar):
         st.markdown(message["parts"][0])
 
-# --- 6. 處理對話 ---
+# --- 7. 處理對話 ---
 if prompt := st.chat_input("請輸入訊息..."):
     
-    # 檢查是否取得了 Key (不管是自動的還是手動的)
     if not api_key:
-        st.warning("⚠️ 請先在左側輸入 API Key，或請管理員設定 Secrets。")
+        st.warning("⚠️ 請先在左側設定 API Key")
         st.stop()
     
-    # 設定 Google API
     try:
         genai.configure(api_key=api_key)
-    except Exception as e:
-        st.error(f"連線失敗: {e}")
-        st.stop()
-
-    # 顯示並儲存使用者訊息
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
-
-    # 呼叫 AI
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
         
-        try:
-            # 設定模型與系統提示 (System Instruction)
-            # 注意：Gemini 1.5 Pro/Flash 支援 system_instruction 參數
+        # 顯示使用者
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(prompt)
+        st.session_state.chat_history.append({"role": "user", "parts": [prompt]})
+
+        # 顯示 AI
+        with st.chat_message("assistant", avatar=current_role['icon']):
+            message_placeholder = st.empty()
+            full_response = ""
+            
+            # 設定模型 (帶入動態 Prompt)
             model = genai.GenerativeModel(
                 'gemini-1.5-flash',
-                system_instruction=current_instruction 
+                system_instruction=final_prompt
             )
             
-            # 整理歷史紀錄 (排除系統無法辨識的格式，並限制長度以防錯誤)
-            # 這裡我們簡單地傳入過去的對話
             chat = model.start_chat(history=st.session_state.chat_history[:-1])
-            
             response = chat.send_message(prompt, stream=True)
             
             for chunk in response:
@@ -111,6 +144,5 @@ if prompt := st.chat_input("請輸入訊息..."):
             message_placeholder.markdown(full_response)
             st.session_state.chat_history.append({"role": "model", "parts": [full_response]})
             
-        except Exception as e:
-            st.error(f"❌ 發生錯誤：{e}")
-            st.caption("如果是 Rate Limit 錯誤，請稍等幾秒再試。")
+    except Exception as e:
+        st.error(f"❌ 錯誤：{e}")
